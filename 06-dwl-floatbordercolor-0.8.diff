@@ -1,0 +1,45 @@
+--- a/dwl.c
++++ b/dwl.c
+@@ -88,7 +88,7 @@
+ #define TEXTW(mon, text)        (drwl_font_getwidth(mon->drw, text) + mon->lrpad)
+ 
+ /* enums */
+-enum { SchemeNorm, SchemeSel, SchemeUrg }; /* color schemes */
++enum { SchemeNorm, SchemeSel, SchemeFloat, SchemeUrg }; /* color schemes */
+ enum { CurNormal, CurPressed, CurMove, CurResize }; /* cursor */
+ enum { XDGShell, LayerShell, X11 }; /* client types */
+ enum { LyrBg, LyrBottom, LyrTile, LyrFloat, LyrTop, LyrFS, LyrOverlay, LyrBlock, NUM_LAYERS }; /* scene layers */
+@@ -2143,7 +2143,7 @@
+ 		/* Don't change border color if there is an exclusive focus or we are
+ 		 * handling a drag operation */
+ 		if (!exclusive_focus && !seat->drag)
+-			client_set_border_color(c, (float[])COLOR(colors[SchemeSel][ColBorder]));
++			client_set_border_color(c, (float[])COLOR(colors[c->isfloating ? SchemeFloat : SchemeSel][ColBorder]));
+ 	}
+ 
+ 	/* Deactivate old client if focus is changing */
+@@ -3095,6 +3095,8 @@
+ {
+ 	Client *p = client_get_parent(c);
+ 	c->isfloating = floating;
++	if (c->mon && c == focustop(c->mon) && !exclusive_focus && !seat->drag)
++		client_set_border_color(c, (float[])COLOR(colors[c->isfloating ? SchemeFloat : SchemeSel][ColBorder]));
+ 	/* If in floating layout do not change the client's layer */
+ 	if (!c->mon || !client_surface(c)->mapped || !c->mon->lt[c->mon->sellt]->arrange)
+ 		return;
+--- a/config.def.h
++++ b/config.def.h
+@@ -23,9 +23,10 @@
+ static const float fullscreen_bg[]         = {0.0f, 0.0f, 0.0f, 1.0f}; /* You can also use glsl colors */
+ static uint32_t colors[][3]                = {
+ 	/*               fg          bg          border    */
+-	[SchemeNorm] = { 0xbbbbbbff, 0x101010ff, 0x444444ff },
+-	[SchemeSel]  = { 0xeeeeeeff, 0x0000b0ff, 0x61afefff },
+-	[SchemeUrg]  = { 0,          0,          0x770000ff },
++	[SchemeNorm]  = { 0xbbbbbbff, 0x101010ff, 0x444444ff },
++	[SchemeSel]   = { 0xeeeeeeff, 0x0000b0ff, 0x61afefff },
++	[SchemeFloat] = { 0xeeeeeeff, 0x0000b0ff, 0xff8800ff },
++	[SchemeUrg]   = { 0,          0,          0x770000ff },
+ };
+ 
+ /* tagging */

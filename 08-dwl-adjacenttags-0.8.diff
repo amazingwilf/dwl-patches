@@ -1,0 +1,111 @@
+diff --git a/config.def.h b/config.def.h
+index 20b600c..2f6ed0b 100644
+--- a/config.def.h
++++ b/config.def.h
+@@ -156,6 +156,12 @@ static const Key keys[] = {
+ 	{ MODKEY,                    XKB_KEY_p,           spawn,            {.v = menucmd} },
+ 	{ MODKEY,                    XKB_KEY_Up,          cyclelayout,      {.i = -1} },
+ 	{ MODKEY,                    XKB_KEY_Down,        cyclelayout,      {.i = +1} },
++	{ MODKEY,                    XKB_KEY_Left,        cycleview,        {.i = -1} },
++	{ MODKEY,                    XKB_KEY_Right,       cycleview,        {.i = +1} },
++	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_Left,        shifttag,         {.i = -1} },
++	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_Right,       shifttag,         {.i = +1} },
++	{ MODKEY|WLR_MODIFIER_CTRL,  XKB_KEY_Left,        shifttagview,     {.i = -1} },
++	{ MODKEY|WLR_MODIFIER_CTRL,  XKB_KEY_Right,       shifttagview,     {.i = +1} },
+ 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_Return,      spawn,            {.v = termcmd} },
+ 	{ MODKEY,                    XKB_KEY_b,           togglebar,        {0} },
+ 	{ MODKEY,                    XKB_KEY_j,           focusstack,       {.i = +1} },
+diff --git a/dwl.c b/dwl.c
+index e44b49a..8921bf7 100644
+--- a/dwl.c
++++ b/dwl.c
+@@ -291,6 +291,7 @@ static void checkidleinhibitor(struct wlr_surface *exclude);
+ static void cleanup(void);
+ static void cleanupmon(struct wl_listener *listener, void *data);
+ static void cyclelayout(const Arg *arg);
++static void cycleview(const Arg *arg);
+ static void cleanuplisteners(void);
+ static void closemon(Monitor *m);
+ static void commitlayersurfacenotify(struct wl_listener *listener, void *data);
+@@ -379,6 +380,7 @@ static void requestdecorationmode(struct wl_listener *listener, void *data);
+ static void requeststartdrag(struct wl_listener *listener, void *data);
+ static void requestmonstate(struct wl_listener *listener, void *data);
+ static void resize(Client *c, struct wlr_box geo, int interact);
++static uint32_t rotatetags(uint32_t tagset, int direction);
+ static void run(char *startup_cmd);
+ static void setcursor(struct wl_listener *listener, void *data);
+ static void setcursorshape(struct wl_listener *listener, void *data);
+@@ -388,6 +390,8 @@ static void setgaps(int oh, int ov, int ih, int iv);
+ static void setlayout(const Arg *arg);
+ static void setmfact(const Arg *arg);
+ static void setmon(Client *c, Monitor *m, uint32_t newtags);
++static void shifttag(const Arg *arg);
++static void shifttagview(const Arg *arg);
+ static void setpsel(struct wl_listener *listener, void *data);
+ static void setsel(struct wl_listener *listener, void *data);
+ static void setup(void);
+@@ -3161,6 +3165,26 @@ cyclelayout(const Arg *arg)
+ 	setlayout(&layoutarg);
+ }
+ 
++uint32_t
++rotatetags(uint32_t tagset, int direction)
++{
++	if (direction > 0)
++		return ((tagset << 1) | (tagset >> (LENGTH(tags) - 1))) & TAGMASK;
++	return ((tagset >> 1) | (tagset << (LENGTH(tags) - 1))) & TAGMASK;
++}
++
++void
++cycleview(const Arg *arg)
++{
++	Arg viewarg;
++
++	if (!selmon || !arg || !arg->i)
++		return;
++
++	viewarg.ui = rotatetags(selmon->tagset[selmon->seltags], arg->i);
++	view(&viewarg);
++}
++
+ void
+ setlayout(const Arg *arg)
+ {
+@@ -3531,6 +3555,37 @@ tag(const Arg *arg)
+ 	drawbars();
+ }
+ 
++void
++shifttag(const Arg *arg)
++{
++	Client *sel = focustop(selmon);
++	Arg tagarg;
++
++	if (!sel || !arg || !arg->i)
++		return;
++
++	tagarg.ui = rotatetags(sel->tags, arg->i);
++	tag(&tagarg);
++}
++
++void
++shifttagview(const Arg *arg)
++{
++	Client *sel = focustop(selmon);
++	uint32_t newtags;
++
++	if (!sel || !arg || !arg->i)
++		return;
++
++	newtags = rotatetags(sel->tags, arg->i);
++	sel->tags = newtags;
++	selmon->seltags ^= 1;
++	selmon->tagset[selmon->seltags] = newtags;
++	focusclient(sel, 1);
++	arrange(selmon);
++	drawbars();
++}
++
+ void
+ tagmon(const Arg *arg)
+ {

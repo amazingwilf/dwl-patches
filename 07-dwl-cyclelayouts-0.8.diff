@@ -1,0 +1,52 @@
+diff --git a/config.def.h b/config.def.h
+index 393052b..20b600c 100644
+--- a/config.def.h
++++ b/config.def.h
+@@ -154,6 +154,8 @@ static const Key keys[] = {
+ 	/* Note that Shift changes certain key codes: 2 -> at, etc. */
+ 	/* modifier                  key                  function          argument */
+ 	{ MODKEY,                    XKB_KEY_p,           spawn,            {.v = menucmd} },
++	{ MODKEY,                    XKB_KEY_Up,          cyclelayout,      {.i = -1} },
++	{ MODKEY,                    XKB_KEY_Down,        cyclelayout,      {.i = +1} },
+ 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_Return,      spawn,            {.v = termcmd} },
+ 	{ MODKEY,                    XKB_KEY_b,           togglebar,        {0} },
+ 	{ MODKEY,                    XKB_KEY_j,           focusstack,       {.i = +1} },
+diff --git a/dwl.c b/dwl.c
+index 2295d17..e44b49a 100644
+--- a/dwl.c
++++ b/dwl.c
+@@ -290,6 +290,7 @@ static void chvt(const Arg *arg);
+ static void checkidleinhibitor(struct wlr_surface *exclude);
+ static void cleanup(void);
+ static void cleanupmon(struct wl_listener *listener, void *data);
++static void cyclelayout(const Arg *arg);
+ static void cleanuplisteners(void);
+ static void closemon(Monitor *m);
+ static void commitlayersurfacenotify(struct wl_listener *listener, void *data);
+@@ -3140,6 +3141,26 @@ setgaps(int oh, int ov, int ih, int iv)
+ 	arrange(selmon);
+ }
+ 
++void
++cyclelayout(const Arg *arg)
++{
++	const Layout *lt;
++	Arg layoutarg;
++	int i, n = LENGTH(layouts);
++
++	if (!selmon || !arg || !arg->i || !n)
++		return;
++
++	lt = selmon->lt[selmon->sellt];
++	for (i = 0; i < n && lt != &layouts[i]; i++);
++	if (i == n)
++		return;
++
++	i = (i + (arg->i > 0 ? 1 : -1) + n) % n;
++	layoutarg.v = &layouts[i];
++	setlayout(&layoutarg);
++}
++
+ void
+ setlayout(const Arg *arg)
+ {

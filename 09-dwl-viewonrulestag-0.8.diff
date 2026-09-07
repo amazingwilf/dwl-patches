@@ -1,0 +1,15 @@
+diff --git a/dwl.c b/dwl.c
+index 8921bf7..284d4e0 100644
+--- a/dwl.c
++++ b/dwl.c
+@@ -2597,6 +2597,10 @@ mapnotify(struct wl_listener *listener, void *data)
+ 		setmon(c, p->mon, p->tags);
+ 	} else {
+ 		applyrules(c);
++		if (c->mon && c->tags != c->mon->tagset[c->mon->seltags]) {
++			selmon = c->mon;
++			view(&(Arg){.ui = c->tags});
++		}
+ 	}
+ 	drawbars();
+ 
