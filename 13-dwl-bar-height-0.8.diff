@@ -1,0 +1,21 @@
+--- a/config.def.h
++++ b/config.def.h
+@@ -15,6 +15,7 @@
+ static const unsigned int gappov           = 10; /* vert outer gap between windows and screen edge */
+ static const int showbar                   = 1; /* 0 means no bar */
+ static const int topbar                    = 1; /* 0 means bottom bar */
++static const int barheight                 = 0; /* additional pixels added to the font-derived bar height */
+ static const char *cursor_theme            = "Bibata-Modern-Ice";
+ static const char cursor_size[]            = "24"; /* Make sure it's a valid integer, otherwise things will break */
+ static const char *fonts[]                 = { "DWM Layout Glyphs:size=15",
+--- a/dwl.c
++++ b/dwl.c
+@@ -4030,7 +4030,7 @@
+ 
+ 	m->b.scale = m->wlr_output->scale;
+ 	m->lrpad = m->drw->font->height;
+-	m->b.height = m->drw->font->height + 2;
++	m->b.height = m->drw->font->height + 2 + barheight;
+ 	m->b.real_height = (int)((float)m->b.height / m->wlr_output->scale);
+ }
+ 

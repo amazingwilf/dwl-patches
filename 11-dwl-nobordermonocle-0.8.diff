@@ -1,0 +1,14 @@
+diff --git a/dwl.c b/dwl.c
+index 284d4e0..311e8e2 100644
+--- a/dwl.c
++++ b/dwl.c
+@@ -604,7 +604,8 @@ arrange(Monitor *m)
+ 			wlr_scene_node_set_enabled(&c->scene->node, VISIBLEON(c, m));
+ 			client_set_suspended(c, !VISIBLEON(c, m));
+ 			if (VISIBLEON(c, m)) {
+-				bw = (!c->isfullscreen && (n != 1 || c->isfloating)) ? borderpx : 0;
++				bw = (!c->isfullscreen && (c->isfloating ||
++						(n != 1 && m->lt[m->sellt]->arrange != monocle))) ? borderpx : 0;
+ 				if (c->bw != bw) {
+ 					c->bw = bw;
+ 					resize(c, c->geom, 0);
